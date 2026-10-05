@@ -101,6 +101,7 @@ CONFIG_ZOTAC_ZONE_HID=m
 
 # Steam Machine
 CONFIG_LEDS_VALVE=m
+CONFIG_CEC_CROS_EC=m
 
 # Framework Laptops/Desktop
 CONFIG_CROS_EC=m
