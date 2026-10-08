@@ -26,13 +26,8 @@ jobs:
             fail-fast: false
             matrix:
                 target:
-                    - id: fc43
-                      image: 'fedora:43'
                     - id: fc44
                       image: 'fedora:44'
-                    - id: el10
-                      image: 'quay.io/centos/centos:stream10'
-                      base_config_fedora: '43'
         runs-on: ubuntu-latest
 
         permissions:
@@ -357,16 +352,16 @@ jobs:
                   rpmbuild --define "_topdir $TOPDIR" -ba ./fedora/kernel.spec
 
             - name: Setup Cosign
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+              if: steps.check-existing.outputs.exists != 'true'
               uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
             - name: Login to ghcr.io
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+              if: steps.check-existing.outputs.exists != 'true'
               run: |
                   echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io -u ${{ github.actor }} --password-stdin
 
             - name: Push OCI artifact
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+              if: steps.check-existing.outputs.exists != 'true'
               id: push
               run: |
                   VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
@@ -383,20 +378,20 @@ jobs:
                   fi
                   STREAM_TAG="${{ steps.version.outputs.stream_tag }}"
                   if [ -n "$STREAM_TAG" ]; then
-                    oras tag "${REPO}:${VERSION}-${{ matrix.target.id }}" "${STREAM_TAG}-${{ matrix.target.id }}"
+                    oras tag "${REPO}:${VERSION}-${{ matrix.target.id }}" "${REPO}:${VERSION}.${{ matrix.target.id }}" "${STREAM_TAG}-${{ matrix.target.id }}"
                   fi
                   echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
             - name: Tag with content hash
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+              if: steps.check-existing.outputs.exists != 'true'
               run: |
                   REPO="${{ env.OCI_REPO }}"
                   VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
-                  oras tag "${REPO}:${VERSION}-${{ matrix.target.id }}" \
+                  oras tag "${REPO}:${VERSION}-${{ matrix.target.id }}" "${REPO}:${VERSION}.${{ matrix.target.id }}" \
                     "sha-${{ steps.content-hash.outputs.hash }}-${{ matrix.target.id }}"
 
             - name: Sign artifacts
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+              if: steps.check-existing.outputs.exists != 'true'
               run: |
                   VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
                   REPO="${{ env.OCI_REPO }}"
@@ -407,7 +402,7 @@ jobs:
                   fi
 
             - name: Attest build provenance
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+              if: steps.check-existing.outputs.exists != 'true'
               uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4
               with:
                   subject-name: ${{ env.OCI_REPO }}
@@ -415,7 +410,7 @@ jobs:
                   push-to-registry: true
 
             - name: Verify signature
-              if: startsWith(github.ref, 'refs/tags/') && steps.check-existing.outputs.exists != 'true'
+              if: steps.check-existing.outputs.exists != 'true'
               run: |
                   VERSION="${{ steps.version.outputs.ogc_version }}.${{ steps.buildnum.outputs.build_num }}"
                   REPO="${{ env.OCI_REPO }}"
