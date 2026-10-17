@@ -6,9 +6,9 @@ on:
             version:
                 description: 'Enter a tagged OGC kernel version in the format <kernel-version>-ogc<rev>'
                 required: true
-    push:
-        tags:
-            - 'v*'
+    # push:
+    #     tags:
+    #         - 'v*'
 
 env:
     OCI_REPO: ghcr.io/${{ github.repository }}-ubuntu
