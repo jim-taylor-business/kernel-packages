@@ -26,8 +26,8 @@ jobs:
             fail-fast: false
             matrix:
                 target:
-                    - id: fc44
-                      image: 'fedora:44'
+                    - id: fc45
+                      image: 'fedora:45'
         runs-on: ubuntu-latest
 
         permissions:
