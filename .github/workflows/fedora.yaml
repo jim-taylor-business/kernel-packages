@@ -134,6 +134,7 @@ jobs:
                   echo "stable_kver=$STABLE_KVER" >> "$GITHUB_OUTPUT"
                   echo "tar_kver=$TAR_KVER" >> "$GITHUB_OUTPUT"
                   echo "is_rc=$IS_RC" >> "$GITHUB_OUTPUT"
+                  echo "is_lts=$IS_LTS" >> "$GITHUB_OUTPUT"
                   echo "rc_ver=$RC_VER" >> "$GITHUB_OUTPUT"
                   echo "stream_tag=$STREAM_TAG" >> "$GITHUB_OUTPUT"
 
@@ -211,6 +212,9 @@ jobs:
                         config/fedora.config.unset \
                         config/ogc.config.unset \
                         .github/workflows/fedora.yaml
+                      if [ "${{ steps.version.outputs.is_lts }}" = "true" ]; then
+                        sha256sum config/lts.config.set config/lts.config.unset
+                      fi
                     } | sha256sum | cut -d' ' -f1
                   )
                   SHORT_HASH="${HASH:0:12}"
@@ -336,6 +340,14 @@ jobs:
                       config/fedora.config.unset
                       config/ogc.config.unset
                   output: linux-${{ steps.version.outputs.tar_kver }}/.config
+
+            - name: Apply LTS kernel configuration
+              if: steps.check-existing.outputs.exists != 'true' && steps.version.outputs.is_lts == 'true'
+              uses: OpenGamingCollective/kernel-configurator@5b4abc58a2edf89941180dbbe33b26415db23b0b # v1.0.1
+              with:
+                  config: linux-${{ steps.version.outputs.tar_kver }}/.config
+                  set: config/lts.config.set
+                  unset: config/lts.config.unset
 
             - name: Validate combined kernel config file
               if: steps.check-existing.outputs.exists != 'true'
